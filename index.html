@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#2a1633" />
+<meta name="description" content="Wheelie Rider — a 2D dirt bike wheelie game. Find the balance point, hold the wheelie, and swap bikes in the garage." />
+<title>Wheelie Rider — Sunset Dirt</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="shell" class="shell mode-menu">
+  <canvas id="game" aria-label="2D dirt bike wheelie game. Hold gas to lift the front wheel, lean to balance, and avoid looping out."></canvas>
+  <div class="screen-fx" aria-hidden="true"></div>
+
+  <!-- ============ IN-GAME HUD ============ -->
+  <header id="hud" class="hud" aria-hidden="true">
+    <div class="hud-left">
+      <div class="brand">WHEELIE<span>RIDER</span></div>
+      <div class="scorebox">
+        <span class="micro-label">SCORE</span>
+        <strong id="score">0</strong>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="bestbox"><span class="micro-label">BEST</span> <strong id="hudBest">0</strong></div>
+      <button id="bikeBtn" class="bike-btn" type="button" title="Change dirtbike (B)" aria-label="Change dirtbike">
+        <span class="bike-swatch" id="bikeSwatch"></span>
+        <span class="bike-btn-copy">
+          <span class="micro-label">CHANGE BIKE <span class="keycap">B</span></span>
+          <strong id="bikeName">MudMuncher</strong>
+        </span>
+        <span class="swap-glyph" aria-hidden="true">↻</span>
+      </button>
+    </div>
+  </header>
+
+  <div id="wheelieChip" class="wheelie-chip" aria-live="off">
+    <span class="wheelie-dot"></span>
+    <span class="wheelie-label">WHEELIE</span>
+    <strong id="wheelieTime">0.0s</strong>
+    <span id="wheelieMult" class="wheelie-mult">×1.0</span>
+  </div>
+
+  <div id="gauge" class="gauge" aria-hidden="true">
+    <div class="gauge-head">
+      <span id="angleRead">0°</span>
+      <span class="gauge-title">BALANCE</span>
+      <span id="speedRead">0 km/h</span>
+    </div>
+    <div class="gauge-track">
+      <div class="gauge-sweet" title="Sweet spot"></div>
+      <div class="gauge-danger" title="Danger zone"></div>
+      <div id="gaugeFill" class="gauge-fill"></div>
+      <div id="gaugeNeedle" class="gauge-needle"></div>
+    </div>
+    <div class="gauge-foot">
+      <span>LOW</span>
+      <span class="sweet-label">SWEET SPOT</span>
+      <span>LOOP OUT</span>
+    </div>
+  </div>
+
+  <!-- ============ TOUCH / CLICK CONTROLS ============ -->
+  <div id="controls" class="controls" aria-hidden="true">
+    <div class="control-cluster lean-cluster">
+      <button class="ctrl" type="button" data-action="leanBack" aria-label="Lean back (A or Left arrow)">
+        <span class="ctrl-key">A / ←</span>
+        <span class="ctrl-name">LEAN<br />BACK</span>
+      </button>
+      <button class="ctrl ctrl-wide" type="button" data-action="leanFwd" aria-label="Lean forward (D or Right arrow)">
+        <span class="ctrl-key">D / →</span>
+        <span class="ctrl-name">LEAN FWD</span>
+      </button>
+    </div>
+    <div class="control-cluster drive-cluster">
+      <button class="ctrl ctrl-brake" type="button" data-action="brake" aria-label="Brake (S or Down arrow)">
+        <span class="ctrl-key">S / ↓</span>
+        <span class="ctrl-name">BRAKE</span>
+      </button>
+      <button class="ctrl ctrl-gas" type="button" data-action="gas" aria-label="Gas (W or Up arrow)">
+        <span class="ctrl-key">W / ↑</span>
+        <span class="ctrl-name">GAS</span>
+      </button>
+    </div>
+  </div>
+
+  <button id="muteBtn" class="mute-btn" type="button" aria-label="Toggle sound" title="Toggle sound (M)">
+    <span id="muteIcon">🔊</span><span class="mute-label">SOUND</span>
+  </button>
+
+  <!-- ============ MENU ============ -->
+  <section id="menu" class="screen menu" aria-labelledby="gameTitle">
+    <div class="menu-card">
+      <div class="kicker"><span class="live-dot"></span> SUNSET DIRT SERIES · ROUND 07</div>
+      <h1 id="gameTitle">WHEELIE <em>RIDER</em></h1>
+      <p class="lede">Find the balance point. Hold it. Do <strong>not</strong> loop out.</p>
+
+      <div class="garage" id="garage">
+        <button id="garagePrev" class="garage-arrow" type="button" aria-label="Previous dirtbike">‹</button>
+        <div class="garage-bike">
+          <div class="garage-head">
+            <span id="menuBikeClass" class="bike-class">MX · ALL-ROUNDER</span>
+            <span id="menuBikeNumber" class="bike-number">#01</span>
+          </div>
+          <h2 id="menuBikeName">MudMuncher 250</h2>
+          <p id="menuBikeTag" class="bike-tag">Honest torque and forgiving manners. The bike that gets everyone started.</p>
+          <div class="garage-visual">
+            <canvas id="bikePreview" width="600" height="208" aria-hidden="true"></canvas>
+            <span class="garage-visual-tag">GARAGE</span>
+          </div>
+          <div class="stats" id="menuStats">
+            <div class="stat"><span>POWER</span><i><b id="statPower"></b></i></div>
+            <div class="stat"><span>LIFT</span><i><b id="statLift"></b></i></div>
+            <div class="stat"><span>BALANCE</span><i><b id="statBalance"></b></i></div>
+          </div>
+        </div>
+        <button id="garageNext" class="garage-arrow" type="button" aria-label="Next dirtbike">›</button>
+      </div>
+
+      <div class="menu-actions">
+        <button id="startBtn" class="btn btn-primary" type="button">DROP THE CLUTCH <span>→</span></button>
+        <button id="menuBikeBtn" class="btn btn-secondary" type="button">CHANGE BIKE <span>↻</span></button>
+      </div>
+
+      <div class="menu-foot">
+        <span>YOUR BEST <strong id="menuBest">0</strong></span>
+        <span class="desktop-hint">W/↑ GAS · S/↓ BRAKE · A/D LEAN · B BIKE</span>
+        <span class="touch-hint">HOLD GAS · LEAN TO BALANCE</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GAME OVER ============ -->
+  <section id="gameover" class="screen gameover hidden" aria-labelledby="overTitle">
+    <div class="over-card">
+      <div class="kicker danger"><span class="live-dot"></span> RUN OVER</div>
+      <h2 id="overTitle">WIPEOUT!</h2>
+      <p id="overReason" class="over-reason">You looped it out. Classic.</p>
+
+      <div class="result-grid">
+        <div class="result big"><span>SCORE</span><strong id="overScore">0</strong></div>
+        <div class="result"><span>WHEELIE TIME</span><strong id="overWheelie">0.0s</strong></div>
+        <div class="result"><span>TOP SPEED</span><strong id="overSpeed">0</strong></div>
+        <div class="result"><span>YOUR BEST</span><strong id="overBest">0</strong></div>
+      </div>
+
+      <div class="new-best hidden" id="newBest">★ NEW PERSONAL BEST ★</div>
+
+      <div class="menu-actions">
+        <button id="againBtn" class="btn btn-primary" type="button">RIDE AGAIN <span>→</span></button>
+        <button id="garageBackBtn" class="btn btn-secondary" type="button">GARAGE</button>
+      </div>
+      <p class="over-hint">TIP: feather the gas, use LEAN FWD to save a high wheelie.</p>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
